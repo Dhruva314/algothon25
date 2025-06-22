@@ -4,8 +4,26 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import shapiro
+# from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
 
+df = pd.read_csv("../prices.txt", header = None, delim_whitespace=True)
+column_names = [f"Stock_{i}" for i in range(1, 51)]
+df.columns = column_names
 
+pct_change_df = df.pct_change()
+pct_change_df.drop(0, axis=0, inplace=True)
+pct_change_df
+
+Y = pct_change_df["Stock_5"].copy()
+Y = (Y >= 0).astype(int)
+X = pct_change_df[['Stock_23', 'Stock_7', 'Stock_3', 'Stock_21']]
+
+X = sm.add_constant(X)  # Add intercept
+model = sm.Logit(Y, X).fit()
+print(model.summary())
+
+# %%
 ##### TODO #########################################
 ### IMPLEMENT 'getMyPosition' FUNCTION #############
 ### TO RUN, RUN 'eval.py' ##########################
