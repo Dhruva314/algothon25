@@ -56,17 +56,6 @@ strong_corr_pairs = mask.stack()
 strong_corr_pairs = strong_corr_pairs[strong_corr_pairs]
 strong_corr_list = strong_corr_pairs.index.tolist()
 
-# # Finds all unique pairs of stocks that have this corr threshold
-# filtered_pairs = []
-# seen = set()
-
-# for pair in strong_corr_list:
-#     sorted_pair = tuple(sorted(pair))
-    
-#     if sorted_pair not in seen:
-#         seen.add(sorted_pair)
-#         filtered_pairs.append(pair)
-
 # Groups stocks by correlation 
 result = process_pairs(strong_corr_list)
 
