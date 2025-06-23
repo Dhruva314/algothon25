@@ -53,7 +53,7 @@ def getMyPosition(prcSoFar):
 
         score = zscore.iloc[-1]
         # size_frac = (-1 * max(min(3 - score, 3), 0)) if score > 1 else (max(min(3 + score, 3), 0))
-        size_frac = min(abs(score), 3) / 3
+        size_frac = np.sign(score)*min(abs(score), 3) / 3
 
         # Use raw prices for trading
         latest_prices = prcSoFar[subset_indices, -1]
@@ -63,11 +63,9 @@ def getMyPosition(prcSoFar):
             for i, stock_idx in enumerate(subset_indices):
                 currentPos[stock_idx] = 0  # Exit
         else:
-            # Direction of trade
-            direction = -1 if zscore.iloc[-1] > 1 else 1
 
             # Cointegration weights (we'll reverse them for mean-reversion)
-            hedge_weights = direction * -vec
+            hedge_weights = -vec
 
             for i, stock_idx in enumerate(subset_indices):
                 price = latest_prices[i]
@@ -77,6 +75,6 @@ def getMyPosition(prcSoFar):
                 dollar_target = size_frac * MAX_POS
                 units = int(dollar_target * abs(weight) / price)
 
-                currentPos[stock_idx] += np.sign(weight) * units
+                currentPos[stock_idx] += units
         
     return currentPos
