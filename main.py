@@ -17,16 +17,16 @@ nInst = 50
 
 cointegration_vectors = [
     [38.53501255, 27.93024285], # Set 1 (50,2)
-    [ 16.87897605,  -9.89043988, -13.81384429,  13.84605889, -30.95955299], # Set 2
-    [ 15.91622771, -19.98080868] # Set 3 (24,12)
+    # [ 16.87897605,  -9.89043988, -13.81384429,  13.84605889, -30.95955299], # Set 2
+    # [ 15.91622771, -19.98080868] # Set 3 (24,12)
 ]
 
 weights = pd.DataFrame({
     "vectors": cointegration_vectors,
     "sets": [
         (49, 1),                    # (50-1, 2-1)
-        (4, 22, 6, 2, 20),          # (5-1, 23-1, 7-1, 3-1, 21-1)
-        (23, 11)                    # (24-1, 12-1)
+        # (4, 22, 6, 2, 20),          # (5-1, 23-1, 7-1, 3-1, 21-1)
+        # (23, 11)                    # (24-1, 12-1)
     ]
 })
 
@@ -51,6 +51,10 @@ def getMyPosition(prcSoFar):
         spread = pd.Series(spread)  # convert to Series
         zscore = (spread - spread.rolling(20).mean()) / spread.rolling(20).std()
 
+        score = zscore.iloc[-1]
+        # size_frac = (-1 * max(min(3 - score, 3), 0)) if score > 1 else (max(min(3 + score, 3), 0))
+        size_frac = min(abs(score), 3) / 3
+
         # Use raw prices for trading
         latest_prices = prcSoFar[subset_indices, -1]
 
@@ -69,8 +73,9 @@ def getMyPosition(prcSoFar):
                 price = latest_prices[i]
                 weight = hedge_weights[i]
 
-                # Dollar exposure capped at $10K per stock
-                units = int(min(np.abs(weight), 1.0) * MAX_POS / price)
+                # Size adjusted position
+                dollar_target = size_frac * MAX_POS
+                units = int(dollar_target * abs(weight) / price)
 
                 currentPos[stock_idx] += np.sign(weight) * units
         
