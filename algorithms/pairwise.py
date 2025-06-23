@@ -18,7 +18,7 @@ df.columns = column_names
 log_prices = df.apply(np.log)
 
 # Select a group of correlated stocks (e.g. from your clustering)
-subset = log_prices[['Stock_50', 'Stock_2']]
+subset = log_prices[['Stock_5', 'Stock_23', 'Stock_7', 'Stock_3', 'Stock_21']]
 
 # Johansen test: det_order = 0 (no deterministic trend), k_ar_diff = 1 (lags)
 result = coint_johansen(subset, det_order=0, k_ar_diff=1)
@@ -50,7 +50,7 @@ exit = abs(zscore) < 0.1
 
 
 # Use raw prices for trading
-latest_prices = df[['Stock_50', 'Stock_2']].iloc[-1].values
+latest_prices = df[['Stock_5', 'Stock_23', 'Stock_7', 'Stock_3', 'Stock_21']].iloc[-1].values
 
 # Determine if you're entering or exiting
 if abs(zscore.iloc[-1]) < 1:
@@ -99,7 +99,7 @@ else:
 
 # position_max = 0
 # if not exit:
-#   position_max = max(round(size_frac*MAX_POS/max(df[['Stock_50', 'Stock_2']][-1]), 0),0)
+#   position_max = max(round(size_frac*MAX_POS/max(df[['Stock_5', 'Stock_23', 'Stock_7', 'Stock_3', 'Stock_21']][-1]), 0),0)
 
 # print(entry_long, entry_short, exit)
 
@@ -138,7 +138,7 @@ def getMyPostion(prcSoFar):
 
 
   # Use raw prices for trading
-  latest_prices = df[['Stock_50', 'Stock_2']].iloc[-1].values
+  latest_prices = df[['Stock_5', 'Stock_23', 'Stock_7', 'Stock_3', 'Stock_21']].iloc[-1].values
 
   # Determine if you're entering or exiting
   if abs(zscore.iloc[-1]) < 1:

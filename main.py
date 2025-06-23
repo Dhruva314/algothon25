@@ -14,48 +14,56 @@ import matplotlib.pyplot as plt
 
 MAX_POS = 10000
 nInst = 50
-currentPos = np.zeros(nInst)
 
+cointegration_vectors = [
+    [38.53501255, 27.93024285], # Set 1 (50,2)
+    [ 16.87897605,  -9.89043988, -13.81384429,  13.84605889, -30.95955299], # Set 2
+    [ 15.91622771, -19.98080868] # Set 3 (24,12)
+]
+
+weights = pd.DataFrame({
+    "vectors": cointegration_vectors,
+    "sets": [
+        (49, 1),                    # (50-1, 2-1)
+        (4, 22, 6, 2, 20),          # (5-1, 23-1, 7-1, 3-1, 21-1)
+        (23, 11)                    # (24-1, 12-1)
+    ]
+})
 
 def getMyPosition(prcSoFar):
     global currentPos
     (nins, nt) = prcSoFar.shape
     if (nt < 20):
         return np.zeros(nins)
-    # lastRet = np.log(prcSoFar[:, -1] / prcSoFar[:, -2])
-    # lNorm = np.sqrt(lastRet.dot(lastRet))
-    # lastRet /= lNorm
-    # rpos = np.array([int(x) for x in 5000 * lastRet / prcSoFar[:, -1]])
-    # currentPos = np.array([int(x) for x in currentPos+rpos])
-    # return currentPos
 
+    currentPos = np.zeros(nInst)
     log_prices = np.log(prcSoFar)
-    subset = log_prices[[49, 1]].T
         
     # Code to Implement Trades
-    cointegration_vector = np.array([38.53501255, 27.93024285])
-    spread = subset @ (cointegration_vector)
-    spread = pd.Series(spread)  # convert to Series
-    zscore = (spread - spread.rolling(20).mean()) / spread.rolling(20).std()
 
+    for _, row in weights.iterrows():
+        vec = row['vectors']
+        vec = np.array(vec)
+        subset_indices = list(row['sets'])
 
-    # Use raw prices for trading
-    latest_prices = prcSoFar[[49, 1]][-1]
+        subset = log_prices[subset_indices].T
+        spread = subset @ (vec)
+        spread = pd.Series(spread)  # convert to Series
+        zscore = (spread - spread.rolling(20).mean()) / spread.rolling(20).std()
 
-    # Determine if you're entering or exiting
-    if abs(zscore.iloc[-1]) < 1:
-        currentPos = np.zeros(nInst)  # Exit
-    else:
-        # Direction of trade
-        direction = -1 if zscore.iloc[-1] > 1 else 1
+        # Use raw prices for trading
+        latest_prices = prcSoFar[subset_indices, -1]
 
-        if direction != 0:
+        # Determine if you're entering or exiting
+        if abs(zscore.iloc[-1]) < 1:
+            for i, stock_idx in enumerate(subset_indices):
+                currentPos[stock_idx] = 0  # Exit
+        else:
+            # Direction of trade
+            direction = -1 if zscore.iloc[-1] > 1 else 1
+
             # Cointegration weights (we'll reverse them for mean-reversion)
-            hedge_weights = direction * -cointegration_vector
-
-            # Convert hedge ratio to unit positions scaled by $10K per instrument
-            subset_indices = [49, 1]  # Stock_50 → index 49, Stock_2 → index 1
-            currentPos = np.zeros(nInst)
+            hedge_weights = direction * -vec
 
             for i, stock_idx in enumerate(subset_indices):
                 price = latest_prices[i]
@@ -64,7 +72,6 @@ def getMyPosition(prcSoFar):
                 # Dollar exposure capped at $10K per stock
                 units = int(min(np.abs(weight), 1.0) * MAX_POS / price)
 
-                currentPos[stock_idx] = np.sign(weight) * units
-        else:
-            currentPos = np.zeros(nInst)
+                currentPos[stock_idx] += np.sign(weight) * units
+        
     return currentPos
