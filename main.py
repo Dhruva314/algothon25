@@ -17,16 +17,16 @@ nInst = 50
 
 cointegration_vectors = [
     [38.53501255, 27.93024285], # Set 1 (50,2)
-    # [ 16.87897605,  -9.89043988, -13.81384429,  13.84605889, -30.95955299], # Set 2
-    # [ 15.91622771, -19.98080868] # Set 3 (24,12)
+    [ 16.87897605,  -9.89043988, -13.81384429,  13.84605889, -30.95955299], # Set 2
+    [ 15.91622771, -19.98080868] # Set 3 (24,12)
 ]
 
 weights = pd.DataFrame({
     "vectors": cointegration_vectors,
     "sets": [
         (49, 1),                    # (50-1, 2-1)
-        # (4, 22, 6, 2, 20),          # (5-1, 23-1, 7-1, 3-1, 21-1)
-        # (23, 11)                    # (24-1, 12-1)
+        (4, 22, 6, 2, 20),          # (5-1, 23-1, 7-1, 3-1, 21-1)
+        (23, 11)                    # (24-1, 12-1)
     ]
 })
 
@@ -65,7 +65,7 @@ def getMyPosition(prcSoFar):
         else:
 
             # Cointegration weights (we'll reverse them for mean-reversion)
-            hedge_weights = -vec
+            hedge_weights = -vec / np.sum(np.abs(vec))
 
             for i, stock_idx in enumerate(subset_indices):
                 price = latest_prices[i]
