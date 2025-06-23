@@ -59,7 +59,7 @@ def getMyPosition(prcSoFar):
         latest_prices = prcSoFar[subset_indices, -1]
 
         # Determine if you're entering or exiting
-        if abs(zscore.iloc[-1]) < 1:
+        if abs(zscore.iloc[-1]) < 1 or abs(zscore.iloc[-1]) > 1.5:
             for i, stock_idx in enumerate(subset_indices):
                 currentPos[stock_idx] = 0  # Exit
         else:
