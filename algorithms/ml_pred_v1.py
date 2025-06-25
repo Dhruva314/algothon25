@@ -1,3 +1,6 @@
+# Uses past average of one stock to predict that stock's current price
+# compares it to the true current price and acts on that
+
 # %%
 import numpy as np
 import pandas as pd
