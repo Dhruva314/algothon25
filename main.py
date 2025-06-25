@@ -204,7 +204,7 @@ def getMyPosition(prcSoFar):
         latest_prices = prcSoFar[subset_indices, -1]
 
         # Determine if you're entering or exiting
-        if abs(zscore.iloc[-1]) > 1:
+        if abs(zscore.iloc[-1]) > 1/2:
             currentPos = getMyPositionMeanReversion(prcSoFar)
         else:
 
