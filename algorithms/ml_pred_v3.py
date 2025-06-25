@@ -4,60 +4,53 @@
 # %%
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error
-import scipy.stats as stats
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.metrics import r2_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
 
-df = pd.read_csv("../prices.txt", header = None, delim_whitespace=True)
+df = pd.read_csv("../prices.txt", header=None, sep=r'\s+')
 column_names = [f"Stock_{i}" for i in range(1, 51)]
 df.columns = column_names
 
-# Train = rows 0–499, Test = rows 500–749
+# Split into train/test
 df_train = df.iloc[0:500]
 df_test = df.iloc[500:750]
 
-X_train_all = df_train.iloc[:-1].values     # (499, 50)
-X_test_all = df_test.iloc[:-1].values       # (249, 50)
+X_train_all = df_train.iloc[:-1].values     # shape (499, 50)
+X_test_all = df_test.iloc[:-1].values       # shape (249, 50)
+
 n_stocks = X_train_all.shape[1]
 
-alphas = np.logspace(-3, 3, 20)  # alpha values to try
-coeff_matrix = np.zeros((n_stocks + 1, n_stocks))  # rows: intercept + 50 coefficients, cols: 50 target stocks
+# Store logistic coefficients: shape (51, 50)
+logistic_coeff_matrix = np.zeros((n_stocks + 1, n_stocks))  # intercept + 50 weights per stock
 
 for target_idx in range(n_stocks):
-    # Target stock prices at t+1
-    y_train = df_train.iloc[1:, target_idx].values  # (499,)
-    y_test = df_test.iloc[1:, target_idx].values    # (249,)
+    # Get future price movements for the stock
+    y_train_prices = df_train.iloc[1:, target_idx].values
+    y_train_prev = df_train.iloc[:-1, target_idx].values
+    y_train = (y_train_prices > y_train_prev).astype(int)
 
-    best_alpha = None
-    best_rmse = np.inf
+    y_test_prices = df_test.iloc[1:, target_idx].values
+    y_test_prev = df_test.iloc[:-1, target_idx].values
+    y_test = (y_test_prices > y_test_prev).astype(int)
 
-    # Grid search: evaluate RMSE on test set
-    for alpha in alphas:
-        model = Ridge(alpha=alpha)
-        model.fit(X_train_all, y_train)
-        y_pred = model.predict(X_test_all)
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        if rmse < best_rmse:
-            best_rmse = rmse
-            best_alpha = alpha
+    # Fit logistic regression
+    model = LogisticRegression(max_iter=5000)
+    model.fit(X_train_all, y_train)
 
-    # Final model fit with best alpha on training data
-    final_model = Ridge(alpha=best_alpha)
-    final_model.fit(X_train_all, y_train)
+    # Evaluate accuracy on test
+    y_pred = model.predict(X_test_all)
+    acc = accuracy_score(y_test, y_pred)
 
     # Store intercept and coefficients
-    coeff_matrix[0, target_idx] = final_model.intercept_
-    coeff_matrix[1:, target_idx] = final_model.coef_
+    logistic_coeff_matrix[0, target_idx] = model.intercept_[0]
+    logistic_coeff_matrix[1:, target_idx] = model.coef_[0]
 
-    print(f"Stock_{target_idx+1}: Best alpha={best_alpha:.5f}, Test RMSE={best_rmse:.5f}")
+    print(f"Stock_{target_idx+1}: Test Accuracy = {acc:.4f}")
 
-print("Coefficient matrix shape:", coeff_matrix.shape)  # Should be (51, 50)
-np.savetxt("lr_coeff_matrix.csv", coeff_matrix, delimiter=",")
-
+# Save logistic coefficients
+np.savetxt("logistic_coeff_matrix.csv", logistic_coeff_matrix, delimiter=",")
+print("Saved logistic_coeff_matrix.csv")
 
 # # Fit final model with best alpha
 # final_model = Ridge(alpha=best_alpha)
@@ -97,7 +90,7 @@ np.savetxt("lr_coeff_matrix.csv", coeff_matrix, delimiter=",")
 ### IMPLEMENT 'getMyPosition' FUNCTION #############
 ### TO RUN, RUN 'eval.py' ##########################
 
-loaded_coeff_matrix = np.loadtxt("algorithms/lr_coeff_matrix.csv", delimiter=",")
+loaded_coeff_matrix = np.loadtxt("algorithms/coeff_matrix.csv", delimiter=",")
 print("Loaded matrix shape:", loaded_coeff_matrix.shape)
 
 nInst = 50
