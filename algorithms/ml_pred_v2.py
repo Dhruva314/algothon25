@@ -135,11 +135,3 @@ def getMyPosition(prcSoFar):
     
     currentPos = positions
     return currentPos
-
-# =====
-# mean(PL): 6.4
-# return: 0.00143
-# StdDev(PL): 68.76
-# annSharpe(PL): 1.46
-# totDvolume: 866728
-# Score: -0.51

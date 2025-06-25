@@ -15,7 +15,7 @@ def loadPrices(fn):
     (nt,nInst) = df.shape
     return (df.values).T
 
-pricesFile="prices.txt"
+pricesFile="C:/Users/dhruv/Coding/algothon25/prices.txt"
 prcAll = loadPrices(pricesFile)
 print ("Loaded %d instruments for %d days" % (nInst, nt))
 
