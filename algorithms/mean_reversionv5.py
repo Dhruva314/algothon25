@@ -35,7 +35,7 @@ def getMyPosition(prcSoFar):
     (nInst, nt) = prcSoFar.shape
     params = dict(DEFAULT_PARAMS)
     
-    if nt > 200:  # Only optimize with sufficient data
+    if nt > 50:  # Only optimize with sufficient data
         try:
             optimized_params = optimize_parameters(prcSoFar)
             params.update({k:v for k,v in optimized_params.items() if k in param_grid})
@@ -146,6 +146,7 @@ def optimize_parameters(price_data, n_splits=3):
         if avg_score > best_score:
             best_score = avg_score
             best_params = params
+    
     return best_params
 
 def evaluate_params(train_data, val_data, params):
@@ -170,4 +171,3 @@ def evaluate_params(train_data, val_data, params):
         positions = new_pos
     
     return np.mean(daily_pl) - 0.1 * np.std(daily_pl) if daily_pl else -np.inf
-
