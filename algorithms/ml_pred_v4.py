@@ -1,5 +1,6 @@
 # Uses All current prices of the 50 instruments to predict the future value of 1 stock
-# Repeat for all stocks (250 variables)
+# Repeat for all stocks
+# Using Current moving average for all stocks
 
 # %%
 import numpy as np
@@ -136,7 +137,7 @@ def getMyPosition(prcSoFar):
     positions = positions.astype(int)
     
     # Optionally, scale by maxPos or leave as just signs (1 or -1)
-    positions = (positions * (maxPos / latest_prices))
+    positions = (positions * (maxPos / latest_prices))/10
 
     rmses = rmses[1:]
     mask = np.abs(diffs) < (2 * rmses)

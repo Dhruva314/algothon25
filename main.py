@@ -5,27 +5,23 @@
 # %%
 
 import numpy as np
-
-
+# %%
 ##### TODO #########################################
 ### IMPLEMENT 'getMyPosition' FUNCTION #############
 ### TO RUN, RUN 'eval.py' ##########################
 
-loaded_coeff_matrix = np.loadtxt("algorithms/logistic_coeff_matrix.csv", delimiter=",")
-print("Loaded matrix shape:", loaded_coeff_matrix.shape)
 
-nInst = 50
-currentPos = np.zeros(nInst)
-maxPos = 10000
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+# print("Loaded matrix shape:", loaded_coeff_matrix.shape)
 
 nInst = 50
 currentPos = np.zeros(nInst)
 maxPos = 10000
 
 def getMyPosition(prcSoFar):
+    loaded_coeff_matrix = np.loadtxt("algorithms/lr_coeff_matrix.csv", delimiter=",")
+    rmses = np.loadtxt("algorithms/lr_rmse.csv")
+
     global currentPos
     (nins, nt) = prcSoFar.shape
     if (nt < 2):
@@ -52,11 +48,11 @@ def getMyPosition(prcSoFar):
     positions = positions.astype(int)
     
     # Optionally, scale by maxPos or leave as just signs (1 or -1)
-    positions = (positions * (maxPos / latest_prices))/30
+    positions = (positions * (maxPos / latest_prices))
 
-    positions = positions.astype(int)
+    rmses = rmses[1:]
+    mask = np.abs(diffs) < (2 * rmses)
+    positions[mask] = 0
     
-    currentPos = positions
+    currentPos = positions.astype(int)
     return currentPos
-
-# %%
