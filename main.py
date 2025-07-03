@@ -8,7 +8,6 @@ import numpy as np
 nInst = 50
 currentPos = np.zeros(nInst)
 
-
 def getMyPosition(prcSoFar):
     global currentPos
     nins, nt = prcSoFar.shape
@@ -145,3 +144,4 @@ def getMyPosition(prcSoFar):
 
     currentPos = np.round(target_positions).astype(int)
     return currentPos
+
