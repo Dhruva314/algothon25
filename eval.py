@@ -15,7 +15,7 @@ def loadPrices(fn):
     (nt,nInst) = df.shape
     return (df.values).T
 
-pricesFile="./priceSlice_test.txt"
+pricesFile="./prices.txt"
 prcAll = loadPrices(pricesFile)
 print ("Loaded %d instruments for %d days" % (nInst, nt))
 
@@ -64,7 +64,7 @@ def calcPL(prcHist, numTestDays):
 
 
 
-(meanpl, ret, plstd, sharpe, dvol) = calcPL(prcAll,200)
+(meanpl, ret, plstd, sharpe, dvol) = calcPL(prcAll,250)
 score = meanpl - 0.1*plstd
 print ("=====")
 print ("mean(PL): %.1lf" % meanpl)
