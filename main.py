@@ -29,7 +29,7 @@ def getMyPosition(prcSoFar):
     # Short-term (10 days), medium-term (30 days), long-term (60 days)
     short_mom = np.mean(log_returns[:, -20:], axis=1)
     med_mom = np.mean(log_returns[:, -40:], axis=1)
-    long_mom = np.mean(log_returns[:, -lookback*5:], axis=1)
+    long_mom = np.mean(log_returns[:, -lookback:], axis=1)
     
     # Weighted combination favoring recent momentum
     momentum = 0.2 * short_mom + 0.6 * med_mom + 0.2 * long_mom
@@ -48,7 +48,7 @@ def getMyPosition(prcSoFar):
 
     # 3. Mean reversion component (contrarian signal)
     # Look for extreme moves that might revert
-    recent_change = (prcSoFar[:, -1] / prcSoFar[:, -9] - 1)  # 10-day change
+    recent_change = np.log(prcSoFar[:, -1] / prcSoFar[:, -9])  # 10-day change
     mean_reversion = -np.tanh(recent_change * 30)  # Contrarian signal
 
     # 4. Market regime detection
@@ -64,7 +64,7 @@ def getMyPosition(prcSoFar):
     for i in range(nins):
         inst_returns = log_returns[i, -lookback:]
         if len(inst_returns) == len(market_returns_recent):
-            beta_calc = np.cov(inst_returns, market_returns_recent)[0,1] / (np.var(market_returns_recent) + 1e-8)
+            beta_calc = np.cov(inst_returns, market_returns_recent)[0,1] / (np.var(market_returns_recent) + 1e-6)
             betas[i] = beta_calc
 
     # 6. Combined signal with multiple factors
