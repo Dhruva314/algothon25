@@ -48,8 +48,10 @@ def getMyPosition(prcSoFar):
 
     # 3. Mean reversion component (contrarian signal)
     # Look for extreme moves that might revert
-    recent_change = np.log(prcSoFar[:, -1] / prcSoFar[:, -9])  # 10-day change
-    mean_reversion = -np.tanh(recent_change * 30)  # Contrarian signal
+    recent_change = np.log(prcSoFar[:, -1] / prcSoFar[:, -11])  # 10-day change
+    log_returns_hist = np.log(prcSoFar[:, 10:] / prcSoFar[:, :-10])
+    log_returns_means = np.mean(log_returns_hist, axis=1)
+    mean_reversion = -np.tanh((recent_change - log_returns_means) * 1/20.0)  # Contrarian signal
 
     # 4. Market regime detection
     market_returns = np.mean(log_returns, axis=0)
@@ -80,14 +82,14 @@ def getMyPosition(prcSoFar):
     combined_signal = (momentum_weight * risk_adj_momentum + 
                       mr_weight * mean_reversion)
     
-    # Apply beta neutralization more selectively
-    beta_adj_signal = combined_signal - 0.5 * betas  # Partial beta hedge
+    # # # Apply beta neutralization more selectively
+    # beta_adj_signal = combined_signal - 0.5 * betas  # Partial beta hedge
     
     # 7. Improved cross-sectional ranking
     # Use robust statistics
-    signal_median = np.median(beta_adj_signal)
-    signal_mad = np.median(np.abs(beta_adj_signal - signal_median))
-    robust_zscore = (beta_adj_signal - signal_median) / (signal_mad * 1.4826 + 1e-8)
+    signal_median = np.median(combined_signal)
+    signal_mad = np.median(np.abs(combined_signal - signal_median))
+    robust_zscore = (combined_signal - signal_median) / (signal_mad * 1.4826 + 1e-8)
     
     # Apply regime factor
     robust_zscore *= regime_factor
@@ -133,14 +135,14 @@ def getMyPosition(prcSoFar):
     max_shares = capital * max_position_pct / prcSoFar[:, -1]
     target_positions = np.clip(target_positions, -max_shares, max_shares)
     
-    # Turnover control - limit changes to reduce transaction costs
-    if nt > lookback + 1:  # Not first iteration
-        position_change = target_positions - currentPos
-        max_change = np.abs(currentPos) * 0.3  # Max 30% position change
-        max_change = np.maximum(max_change, 10)  # But at least 10 shares
+    # # Turnover control - limit changes to reduce transaction costs
+    # if nt > lookback + 1:  # Not first iteration
+    #     position_change = target_positions - currentPos
+    #     max_change = np.abs(currentPos) * 0.3  # Max 30% position change
+    #     max_change = np.maximum(max_change, 10)  # But at least 10 shares
         
-        position_change = np.clip(position_change, -max_change, max_change)
-        target_positions = currentPos + position_change
+    #     position_change = np.clip(position_change, -max_change, max_change)
+    #     target_positions = currentPos + position_change
 
     currentPos = np.round(target_positions).astype(int)
     return currentPos
