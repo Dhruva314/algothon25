@@ -7,7 +7,7 @@ signal_medians = []
 signal_mads = []
 regime_factors = []
 
-def getPosition(prcSoFar, prev):
+def getPosition(prcSoFar):
     global currentPos
     nins, nt = prcSoFar.shape
     lookback = 50  # Increased for better signal
@@ -81,14 +81,14 @@ def getPosition(prcSoFar, prev):
     combined_signal = (momentum_weight * risk_adj_momentum + 
                       mr_weight * mean_reversion)
     
-    # Apply beta neutralization more selectively
-    beta_adj_signal = combined_signal - 0.5 * betas  # Partial beta hedge
+    # # Apply beta neutralization more selectively
+    # beta_adj_signal = combined_signal - 0.5 * betas  # Partial beta hedge
     
     # 7. Improved cross-sectional ranking
     # Use robust statistics
-    signal_median = np.median(beta_adj_signal)
-    signal_mad = np.median(np.abs(beta_adj_signal - signal_median))
-    robust_zscore = (beta_adj_signal - signal_median) / (signal_mad * 1.4826 + 1e-8)
+    signal_median = np.median(combined_signal)
+    signal_mad = np.median(np.abs(combined_signal - signal_median))
+    robust_zscore = (combined_signal - signal_median) / (signal_mad * 1.4826 + 1e-8)
     
     # Apply regime factor
     robust_zscore *= regime_factor
@@ -139,13 +139,13 @@ def getPosition(prcSoFar, prev):
     target_positions = np.clip(target_positions, -max_shares, max_shares)
     
     # Turnover control - limit changes to reduce transaction costs
-    if nt > lookback + 1:  # Not first iteration
-        position_change = target_positions - prev
-        max_change = np.abs(prev) * 0.3  # Max 30% position change
-        max_change = np.maximum(max_change, 10)  # But at least 10 shares
+    # if nt > lookback + 1:  # Not first iteration
+    #     position_change = target_positions - prev
+    #     max_change = np.abs(prev) * 0.3  # Max 30% position change
+    #     max_change = np.maximum(max_change, 10)  # But at least 10 shares
         
-        position_change = np.clip(position_change, -max_change, max_change)
-        target_positions = prev + position_change
+    #     position_change = np.clip(position_change, -max_change, max_change)
+    #     target_positions = prev + position_change
 
     currentPos = np.round(target_positions).astype(int)
     return currentPos
@@ -184,8 +184,7 @@ def calcPL(prcHist, numTestDays):
         curPrices = prcHistSoFar[:,-1]
         if (t < nt):
             # Trading, do not do it on the very last day of the test
-            newPosOrig = getPosition(prcHistSoFar, prev)
-            prev = newPosOrig
+            newPosOrig = getPosition(prcHistSoFar)
             posLimits = np.array([int(x) for x in dlrPosLimit / curPrices])
             newPos = np.clip(newPosOrig, -posLimits, posLimits)
             deltaPos = newPos - curPos
