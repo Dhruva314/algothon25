@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from main import getMyPosition as getPosition
+# from main import getMyPosition as getPosition
 
 nInst = 0
 nt = 0
@@ -18,6 +18,58 @@ def loadPrices(fn):
 pricesFile="./prices.txt"
 prcAll = loadPrices(pricesFile)
 print ("Loaded %d instruments for %d days" % (nInst, nt))
+
+# prev = np.zeros(50)
+
+def pairWisePer(prcSoFar, stock_A, stock_B, factor) :
+    currentPos = np.zeros(50)
+    hist_A = prcSoFar[stock_A, :]
+    hist_B = prcSoFar[stock_B, :]
+
+    # _, pval, _ = coint(hist_A, hist_B)
+
+    # --- Beta regression: regress A on B using least squares ---
+    beta = np.polyfit(hist_B, hist_A, 1)[0]  # Only get the slope (ignore intercept)
+
+    # --- Compute hedged spread ---
+    spread = hist_A - beta * hist_B * factor
+    mean_spread = np.mean(spread)
+    std_spread = np.std(spread)
+
+    z_score = (spread[-1] - mean_spread) / std_spread
+    z_thesh = 3
+    pos_A = np.round(dlrPosLimit / prcSoFar[stock_A, -1]).astype(int)
+    pos_B = np.round(dlrPosLimit / prcSoFar[stock_B, -1]).astype(int)
+    if z_score > z_thesh:
+        currentPos[stock_A] = -1 * np.abs(z_score - z_thesh) * pos_A
+        currentPos[stock_B] = 1 * np.abs(z_score - z_thesh) * pos_B
+    elif z_score < -z_thesh:
+        currentPos[stock_A] = 1 * np.abs(z_score + z_thesh) * pos_A
+        currentPos[stock_B] = -1 * np.abs(z_score + z_thesh) * pos_B
+    elif abs(z_score) < 0.2:
+        currentPos[stock_A] = 0
+        currentPos[stock_B] = 0
+    # else:
+    #     currentPos = prev
+
+    return currentPos
+
+def getPosition(prcSoFar):
+    currentPos = np.zeros(50)
+    (nins, nt) = prcSoFar.shape
+    if (nt < 25):
+        return np.zeros(nins)
+    
+    stock_A = 50-1
+    stock_B = 2-1
+
+    stock_C = 24-1
+    stock_D = 12-1
+
+    currentPos += pairWisePer(prcSoFar, stock_A, stock_B, -1)
+    currentPos += pairWisePer(prcSoFar, stock_C, stock_D, 1)
+
+    return currentPos
 
 def calcPL(prcHist, startDay):
     cash = 0
@@ -35,6 +87,7 @@ def calcPL(prcHist, startDay):
         if (t < nt):
             # Trading, do not do it on the very last day of the test
             newPosOrig = getPosition(prcHistSoFar)
+            # prev = newPosOrig
             posLimits = np.array([int(x) for x in dlrPosLimit / curPrices])
             newPos = np.clip(newPosOrig, -posLimits, posLimits)
             deltaPos = newPos - curPos
