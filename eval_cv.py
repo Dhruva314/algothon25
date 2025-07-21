@@ -65,7 +65,7 @@ def calcPL(prcHist, startDay):
 
 # CV Fold-10
 
-np.random.seed(314)
+np.random.seed(217)
 
 def pick_spaced_points(min_val, max_val, num_points, window):
     points = []
